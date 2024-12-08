@@ -1,0 +1,112 @@
+server/
+├── app.js           // Main server file
+├── models/
+│   └── Content.js   // Mongoose schema
+├── routes/
+│   └── content.js   // API routes
+├── .env             // Environment variables
+└── package.json     // Dependencies
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const contentRoutes = require("./routes/content");
+
+// Initialize dotenv
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.log(err));
+
+// Routes
+app.use("/api/content", contentRoutes);
+
+// Root Endpoint
+app.get("/", (req, res) => {
+  res.send("Crypto Education Backend is Running!");
+});
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+const express = require("express");
+const router = express.Router();
+const Content = require("../models/Content");
+
+// Get All Content
+router.get("/", async (req, res) => {
+  try {
+    const content = await Content.find();
+    res.json(content);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add New Content
+router.post("/", async (req, res) => {
+  const { title, description, category, contentType, url } = req.body;
+
+  if (!title || !description || !category || !contentType || !url) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    const newContent = new Content({
+      title,
+      description,
+      category,
+      contentType,
+      url,
+    });
+    await newContent.save();
+    res.status(201).json(newContent);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
+const mongoose = require("mongoose");
+
+const ContentSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true }, // Example: "Beginner", "Trading"
+  contentType: { type: String, required: true }, // Example: "Article", "Video"
+  url: { type: String, required: true }, // Resource URL
+});
+
+module.exports = mongoose.model("Content", ContentSchema);
+MONGO_URI=your_mongodb_connection_string
+{
+  "name": "crypto-education-backend",
+  "version": "1.0.0",
+  "description": "Backend for Crypto Education Platform",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
